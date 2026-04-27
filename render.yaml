@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: fitness-platform-v3
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      - key: PROMPTPAY_ID
+        value: "0812345678"
+      - key: PAYMENT_MODE
+        value: "manual"

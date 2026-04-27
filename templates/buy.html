@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<h2>Choose your plan</h2><div class="grid3">{% for key,p in plans.items() %}<form class="card" method="post"><h3>{{p.name}}</h3><p class="price">฿{{p.price}}</p><p>{{p.days}} day access</p><input type="hidden" name="plan" value="{{key}}"><button class="btn full">Pay with PromptPay</button></form>{% endfor %}</div>{% endblock %}
