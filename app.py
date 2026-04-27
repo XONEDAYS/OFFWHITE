@@ -17,14 +17,14 @@ from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 load_dotenv()
-
+port = int(os.environ.get("PORT", 5000))
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///fitness_platform.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-PROMPTPAY_ID = os.getenv('PROMPTPAY_ID', '0812345678')
+PROMPTPAY_ID = os.getenv('PROMPTPAY_ID', '0917853662')
 PAYMENT_MODE = os.getenv('PAYMENT_MODE', 'manual')  # manual, auto_mock, webhook
 WEBHOOK_SECRET = os.getenv('WEBHOOK_SECRET', 'change-webhook-secret')
 GYM_NAME = os.getenv('GYM_NAME', 'Sundos Fitness')
@@ -493,4 +493,4 @@ with app.app_context():
     init_db()
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
