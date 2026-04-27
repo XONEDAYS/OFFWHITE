@@ -1,1 +1,19 @@
-{% extends 'base.html' %}{% block content %}<div class="form-card"><h2>QR Check-in</h2><p class="hint">Paste or scan the member QR token. A hardware scanner usually types the QR text into this box.</p><form method="post"><label>QR token</label><input name="token" autofocus required><button class="btn full">Check in</button></form>{% if result %}<hr><h3 class="status {{'good' if result=='valid' else 'bad'}}">{{result|upper}}</h3>{% if user %}<p>{{user.name}} · {{user.membership_type}} · expires {{user.membership_expiry}}</p>{% endif %}{% endif %}</div>{% endblock %}
+{% extends 'base.html' %}{% block content %}<div class="form-card"><h2>QR Check-in</h2><p class="hint">Paste or scan the member QR token. A hardware scanner usually types the QR text into this box.</p><div id="reader" style="width:300px;"></div><form method="post"><label>QR token</label><input name="token" autofocus required><button class="btn full">Check in</button></form><script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+function onScanSuccess(decodedText, decodedResult) {
+    document.querySelector("input[name='token']").value = decodedText;
+}
+
+const html5QrCode = new Html5Qrcode("reader");
+
+Html5Qrcode.getCameras().then(devices => {
+    if (devices.length) {
+        html5QrCode.start(
+            devices[0].id,
+            { fps: 10, qrbox: 250 },
+            onScanSuccess
+        );
+    }
+});
+</script>{% if result %}<hr><h3 class="status {{'good' if result=='valid' else 'bad'}}">{{result|upper}}</h3>{% if user %}<p>{{user.name}} · {{user.membership_type}} · expires {{user.membership_expiry}}</p>{% endif %}{% endif %}</div>{% endblock %}
