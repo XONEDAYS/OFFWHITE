@@ -10,10 +10,13 @@ const html5QrCode = new Html5Qrcode("reader");
 Html5Qrcode.getCameras().then(devices => {
     if (devices.length) {
         html5QrCode.start(
-            devices[0].id,
-            { fps: 10, qrbox: 250 },
-            onScanSuccess
-        );
+    { facingMode: "environment" }, // 👈 THIS forces back camera
+    {
+        fps: 10,
+        qrbox: 250
+    },
+    onScanSuccess
+);
     }
 });
 </script>{% if result %}<hr><h3 class="status {{'good' if result=='valid' else 'bad'}}">{{result|upper}}</h3>{% if user %}<p>{{user.name}} · {{user.membership_type}} · expires {{user.membership_expiry}}</p>{% endif %}{% endif %}</div>{% endblock %}
