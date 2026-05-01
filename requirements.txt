@@ -5,3 +5,4 @@ qrcode[pil]==7.4.2
 gunicorn==22.0.0
 python-dotenv==1.0.1
 itsdangerous==2.2.0
+psycopg2-binary

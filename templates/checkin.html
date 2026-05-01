@@ -1,4 +1,17 @@
-{% extends 'base.html' %}{% block content %}<div class="form-card"><h2>QR Check-in</h2><p class="hint">Paste or scan the member QR token. A hardware scanner usually types the QR text into this box.</p><div id="reader" style="width:300px;"></div><form method="post"><label>QR token</label><input name="token" autofocus required><button class="btn full">Check in</button></form><script src="https://unpkg.com/html5-qrcode"></script>
+{% extends 'base.html' %}{% block content %}<div class="form-card"><h2>QR Check-in</h2><p class="hint">Paste or scan the member QR token. A hardware scanner usually types the QR text into this box.</p><div id="reader" style="width:300px;"></div><form method="post"><label>QR token</label><input name="token" autofocus required>
+    <label>Muscle Group</label>
+<select name="muscle_group" required>
+    <option value="Chest">Chest</option>
+    <option value="Back">Back</option>
+    <option value="Legs">Legs</option>
+    <option value="Shoulders">Shoulders</option>
+    <option value="Arms">Arms</option>
+    <option value="Full Body">Full Body</option>
+</select>
+
+<label>Note (optional)</label>
+<input type="text" name="note">
+    <button class="btn full">Check in</button></form><script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
 function onScanSuccess(decodedText, decodedResult) {

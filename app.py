@@ -76,6 +76,11 @@ class CheckIn(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     method = db.Column(db.String(30), default='qr')
     result = db.Column(db.String(30), default='valid')
+    # NEW fields 👇
+    muscle_group = db.Column(db.String(50))
+    note = db.Column(db.String(200))
+
+    user = db.relationship('User', backref='checkins')
 
 # ---------- PromptPay EMV QR ----------
 def _tlv(tag, value):
@@ -390,6 +395,18 @@ def checkin():
     if request.method == 'POST':
         token = request.form.get('token','').strip()
         user = User.query.filter_by(member_qr_token=token).first()
+        if user:
+            muscle = request.form.get("muscle_group")
+            note = request.form.get("note")
+
+            checkin = CheckIn(
+                user_id=user.id,
+                muscle_group=muscle,
+                note=note
+            )
+
+            db.session.add(checkin)
+            db.session.commit()
         if user and user.membership_expiry and user.membership_expiry > datetime.utcnow():
             result = 'valid'; db.session.add(CheckIn(user_id=user.id, method='qr', result='valid'))
             flash('Valid member. Entry allowed.', 'success')
