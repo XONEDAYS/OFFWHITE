@@ -14,8 +14,8 @@
     <button class="btn full">Check in</button></form><script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
-function onScanSuccess(decodedText, decodedResult) {
-    document.querySelector("input[name='token']").value = decodedText;
+function onScanSuccess(decodedText) {
+    document.getElementById("token").value = decodedText;
 }
 
 const html5QrCode = new Html5Qrcode("reader");
