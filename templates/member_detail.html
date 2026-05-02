@@ -1,7 +1,7 @@
 {% extends 'base.html' %}{% block content %}<div class="split"><div class="card"><h2>{{user.name}}</h2><p>{{user.email}}</p><p>Phone: {{user.phone or '-'}}</p><p>Role: {{user.role}}</p><p>Status: <span class="status {{'good' if user.membership_expiry and user.membership_expiry>now else 'bad'}}">{{'Active' if user.membership_expiry and user.membership_expiry>now else 'Inactive'}}</span></p><p>Membership: {{user.membership_type or '-'}}</p><p>Expiry: {{user.membership_expiry or '-'}}</p><form method="post" action="{{url_for('regenerate_qr',user_id=user.id)}}"><button class="btn ghost">Regenerate lost QR</button></form>{% if current_user.role == 'admin' %}<a class="btn ghost" href="{{url_for('admin_reset_password',user_id=user.id)}}">Reset Password</a>{% endif %}<form method="post" action="{{url_for('manual_checkin',user_id=user.id)}}"><button class="btn">Manual check-in</button></form></div><div class="card"><h3>Payments</h3>
 <h3>Workout History</h3>
 
-
+{% if checkins %}
 <table>
 <tr>
     <th>Date</th>
@@ -9,11 +9,16 @@
     <th>Note</th>
 </tr>
 
+{% for c in checkins %}
 <tr>
     <td>{{ c.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
     <td>{{ c.muscle_group or '-' }}</td>
     <td>{{ c.note or '-' }}</td>
 </tr>
+{% endfor %}
 </table>
-
+{% else %}
+<p>No activity yet</p>
+{% endif %}
+<p>Total: {{ checkins|length }}</p>
 {% for p in payments %}<div class="row"><span>{{p.ref}} · {{plans[p.plan].name}} · ฿{{p.amount}}</span><b>{{p.status}}</b></div>{% else %}<p class="hint">No payments.</p>{% endfor %}</div></div>{% endblock %}
