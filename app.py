@@ -392,21 +392,22 @@ def regenerate_qr(user_id):
 @staff_required
 def checkin():
     result = None; user = None
+    if user:
+        muscle = request.form.get("muscle_group")
+        note = request.form.get("note")
+        print("Saved:", muscle, note)
+        checkin = CheckIn(
+            user_id=user.id,
+            muscle_group=muscle,
+            note=note
+        )
+
+        db.session.add(checkin)
+        db.session.commit()
     if request.method == 'POST':
         token = request.form.get('token','').strip()
         user = User.query.filter_by(member_qr_token=token).first()
-        if user:
-            muscle = request.form.get("muscle_group")
-            note = request.form.get("note")
-            print("Saved:", muscle, note)
-            checkin = CheckIn(
-                user_id=user.id,
-                muscle_group=muscle,
-                note=note
-            )
-
-            db.session.add(checkin)
-            db.session.commit()
+        
         if user and user.membership_expiry and user.membership_expiry > datetime.utcnow():
             result = 'valid'; db.session.add(CheckIn(user_id=user.id, method='qr', result='valid'))
             flash('Valid member. Entry allowed.', 'success')
