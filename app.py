@@ -400,13 +400,11 @@ def checkin():
 
         if user and user.membership_expiry and user.membership_expiry > datetime.utcnow():
 
-            # get form data
             muscle = request.form.get("muscle_group")
             note = request.form.get("note")
 
             print("Saved:", muscle, note)
 
-            # SAVE ONLY ONE RECORD
             checkin = CheckIn(
                 user_id=user.id,
                 muscle_group=muscle,
