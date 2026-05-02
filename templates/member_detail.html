@@ -9,13 +9,11 @@
     <th>Note</th>
 </tr>
 
-{% for c in checkin %}
 <tr>
     <td>{{ c.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
     <td>{{ c.muscle_group or '-' }}</td>
     <td>{{ c.note or '-' }}</td>
 </tr>
-{% endfor %}
 </table>
 
 {% for p in payments %}<div class="row"><span>{{p.ref}} · {{plans[p.plan].name}} · ฿{{p.amount}}</span><b>{{p.status}}</b></div>{% else %}<p class="hint">No payments.</p>{% endfor %}</div></div>{% endblock %}
