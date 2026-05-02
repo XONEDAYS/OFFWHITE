@@ -391,19 +391,22 @@ def regenerate_qr(user_id):
 @app.route('/checkin', methods=['GET','POST'])
 @staff_required
 def checkin():
-    result = None; user = None
+    result = None
+    user = None
+
     if request.method == 'POST':
         token = request.form.get('token','').strip()
         user = User.query.filter_by(member_qr_token=token).first()
-        
+
         if user and user.membership_expiry and user.membership_expiry > datetime.utcnow():
-            # ✅ get extra data
+
+            # get form data
             muscle = request.form.get("muscle_group")
             note = request.form.get("note")
 
             print("Saved:", muscle, note)
 
-            # ✅ save EVERYTHING in ONE record
+            # SAVE ONLY ONE RECORD
             checkin = CheckIn(
                 user_id=user.id,
                 muscle_group=muscle,
@@ -414,11 +417,14 @@ def checkin():
 
             db.session.add(checkin)
             db.session.commit()
-            result = 'valid'; db.session.add(CheckIn(user_id=user.id, method='qr', result='valid'))
+
+            result = 'valid'
             flash('Valid member. Entry allowed.', 'success')
+
         else:
-            result = 'invalid'; flash('Invalid or expired membership.', 'danger')
-        db.session.commit()
+            result = 'invalid'
+            flash('Invalid or expired membership.', 'danger')
+
     return render_template('checkin.html', result=result, user=user, now=datetime.utcnow())
 
 @app.route('/admin/manual-checkin/<int:user_id>', methods=['POST'])
