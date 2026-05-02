@@ -415,7 +415,7 @@ def checkin():
 
             db.session.add(checkin)
             db.session.commit()
-
+            print("SAVED CHECKIN:", checkin.user_id)
             result = 'valid'
             flash('Valid member. Entry allowed.', 'success')
 
