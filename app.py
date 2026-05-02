@@ -398,7 +398,7 @@ def checkin():
         if user:
             muscle = request.form.get("muscle_group")
             note = request.form.get("note")
-
+            print("Saved:", muscle, note)
             checkin = CheckIn(
                 user_id=user.id,
                 muscle_group=muscle,
