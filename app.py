@@ -393,7 +393,12 @@ def regenerate_qr(user_id):
 def checkin():
     result = None
     user = None
+    print("TOKEN:", token)
+    print("USER FOUND:", user)
 
+    if user:
+        print("EXPIRY:", user.membership_expiry)
+        print("NOW:", datetime.utcnow())
     if request.method == 'POST':
         token = request.form.get('token','').strip()
         user = User.query.filter_by(member_qr_token=token).first()
