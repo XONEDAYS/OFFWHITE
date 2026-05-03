@@ -414,12 +414,11 @@ def checkin():
 
             db.session.add(checkin)
             db.session.commit()
-            result = 'valid'; db.session.add(CheckIn(user_id=user.id, method='qr', result='valid'))
-            flash('Valid member. Entry allowed.', 'success')
+            result = 'valid'; flash('Valid member. Entry allowed.', 'success')
         else:
             result = 'invalid'; flash('Invalid or expired membership.', 'danger')
         db.session.commit()
-    return render_template('checkin.html',checkins=checkin, result=result, user=user, now=datetime.utcnow())
+    return render_template('checkin.html', result=result, user=user, now=datetime.utcnow())
 
 @app.route('/admin/manual-checkin/<int:user_id>', methods=['POST'])
 @staff_required
