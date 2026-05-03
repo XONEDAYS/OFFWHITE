@@ -419,7 +419,7 @@ def checkin():
             result = 'invalid'; flash('Invalid or expired membership.', 'danger')
         db.session.commit()
         checkins = CheckIn.query.filter_by(user_id=user.id).all()
-    return render_template('checkin.html', result=result, user=user,checkins=checkins, now=datetime.utcnow())
+    return render_template('checkin.html', result=result, user=user, now=datetime.utcnow())
 
 @app.route('/admin/manual-checkin/<int:user_id>', methods=['POST'])
 @staff_required
