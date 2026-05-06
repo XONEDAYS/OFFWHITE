@@ -350,8 +350,13 @@ def members():
 @staff_required
 def member_detail(user_id):
     user = User.query.get_or_404(user_id)
+    checkins = CheckIn.query.filter_by(user_id=user.id)\
+    .order_by(CheckIn.timestamp.desc()).all()
+
+    # ✅ NEW: latest check-in
+    latest = checkins[0] if checkins else None
     payments = Payment.query.filter_by(user_id=user.id).order_by(Payment.created_at.desc()).all()
-    return render_template('member_detail.html', user=user, payments=payments, now=datetime.utcnow())
+    return render_template('member_detail.html', user=user,checkins=checkins,latest=latest, payments=payments, now=datetime.utcnow())
 
 @app.route('/admin/add-member', methods=['GET','POST'])
 @staff_required
