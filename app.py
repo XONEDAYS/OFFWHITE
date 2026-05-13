@@ -17,17 +17,16 @@ from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 load_dotenv()
-port = int(os.environ.get("PORT", 5000))
+
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///fitness_platform.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-PROMPTPAY_ID = os.getenv('PROMPTPAY_ID', '0917853662')
+PROMPTPAY_ID = os.getenv('PROMPTPAY_ID', '0812345678')
 PAYMENT_MODE = os.getenv('PAYMENT_MODE', 'manual')  # manual, auto_mock, webhook
 WEBHOOK_SECRET = os.getenv('WEBHOOK_SECRET', 'change-webhook-secret')
-GYM_NAME = os.getenv('GYM_NAME', 'OFFWHITE')
+GYM_NAME = os.getenv('GYM_NAME', 'Sundos Fitness')
 BASE_URL = os.getenv('BASE_URL')
 SMTP_HOST = os.getenv('SMTP_HOST')
 SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
@@ -39,9 +38,9 @@ db = SQLAlchemy(app)
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 PLANS = {
-    'day': {'name': 'Day Pass', 'price': 50, 'days': 1},
-    'monthly': {'name': 'Monthly Membership', 'price': 700, 'days': 30},
-    'quarterly': {'name': 'Quarterly Membership', 'price': 2000, 'days': 90},
+    'day': {'name': 'Day Pass', 'price': 150, 'days': 1},
+    'monthly': {'name': 'Monthly Membership', 'price': 1200, 'days': 30},
+    'quarterly': {'name': 'Quarterly Membership', 'price': 3200, 'days': 90},
 }
 
 class User(db.Model):
@@ -76,11 +75,8 @@ class CheckIn(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     method = db.Column(db.String(30), default='qr')
     result = db.Column(db.String(30), default='valid')
-    # NEW fields 👇
     muscle_group = db.Column(db.String(50))
-    note = db.Column(db.String(200))
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    user = db.relationship('User', backref='checkins')
+    note = db.Column(db.String(255))
 
 # ---------- PromptPay EMV QR ----------
 def _tlv(tag, value):
@@ -199,6 +195,34 @@ def send_password_reset_email(to_email, reset_link):
         print('Set SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SMTP_FROM to send this by email.\n')
 
 # ---------- Routes ----------
+
+MUSCLE_GROUPS = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio", "Full Body", "Mobility"]
+
+def record_checkin(user, method="qr", result="valid", muscle_group=None, note=None):
+    """Create one check-in record with optional workout details."""
+    checkin = CheckIn(
+        user_id=user.id,
+        method=method,
+        result=result,
+        muscle_group=muscle_group,
+        note=note
+    )
+    db.session.add(checkin)
+    db.session.commit()
+    return checkin
+
+def get_user_by_qr_or_id(token):
+    """Find user from QR token first, then numeric member id."""
+    token = (token or "").strip()
+    if not token:
+        return None
+    user = User.query.filter_by(member_qr_token=token).first()
+    if user:
+        return user
+    if token.isdigit():
+        return User.query.get(int(token))
+    return None
+
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -346,18 +370,33 @@ def members():
         query = query.filter((User.name.ilike(f'%{q}%')) | (User.email.ilike(f'%{q}%')) | (User.phone.ilike(f'%{q}%')))
     return render_template('members.html', members=query.order_by(User.created_at.desc()).all(), q=q, now=datetime.utcnow())
 
-@app.route('/admin/member/<int:user_id>')
+@app.route('/member/<int:user_id>')
 @staff_required
 def member_detail(user_id):
+
     user = User.query.get_or_404(user_id)
+
+    payments = Payment.query.filter_by(user_id=user.id)\
+        .order_by(Payment.created_at.desc())\
+        .all()
+
     checkins = CheckIn.query.filter_by(user_id=user.id)\
-    .order_by(CheckIn.timestamp.desc()).all()
+        .order_by(CheckIn.created_at.desc())\
+        .all()
 
-    # ✅ NEW: latest check-in
-    latest = checkins[0] if checkins else None
-    payments = Payment.query.filter_by(user_id=user.id).order_by(Payment.created_at.desc()).all()
-    return render_template('member_detail.html', user=user,checkins=checkins,latest=latest, payments=payments, now=datetime.utcnow())
+    #print("CHECKINS FOUND:", checkins)
 
+    last_checkin = checkins[0] if checkins else None
+
+    return render_template(
+        'member_detail.html',
+        user=user,
+        payments=payments,
+        plans=PLANS,
+        checkins=checkins,
+        last_checkin=last_checkin,
+        now=datetime.utcnow()
+    )
 @app.route('/admin/add-member', methods=['GET','POST'])
 @staff_required
 def add_member():
@@ -396,46 +435,83 @@ def regenerate_qr(user_id):
 @app.route('/checkin', methods=['GET','POST'])
 @staff_required
 def checkin():
-    result = None; user = None
+    result = None
+    user = None
+    latest_checkin = None
+
     if request.method == 'POST':
-        token = request.form.get('token','').strip()
-        user = User.query.filter_by(member_qr_token=token).first()
-        print("TOKEN:", token)
-        print("USER FOUND:", user)
-        
+        token = request.form.get('token', '').strip()
+        muscle_group = request.form.get('muscle_group')
+        note = request.form.get('note')
+
+        user = get_user_by_qr_or_id(token)
+
         if user and user.membership_expiry and user.membership_expiry > datetime.utcnow():
-            # ✅ get extra data
-            muscle = request.form.get("muscle_group")
-            note = request.form.get("note")
-
-            print("Saved:", muscle, note)
-
-            # ✅ save EVERYTHING in ONE record
-            checkin = CheckIn(
-                user_id=user.id,
-                muscle_group=muscle,
-                note=note,
+            latest_checkin = record_checkin(
+                user=user,
                 method='qr',
-                result='valid'
+                result='valid',
+                muscle_group=muscle_group,
+                note=note
             )
-
-            db.session.add(checkin)
-            db.session.commit()
-            result = 'valid'; flash('Valid member. Entry allowed.', 'success')
+            result = 'valid'
+            flash(f'Valid member: {user.name}. Entry allowed.', 'success')
+        elif user:
+            result = 'expired'
+            flash(f'{user.name} is found but membership is expired.', 'danger')
         else:
-            result = 'invalid'; flash('Invalid or expired membership.', 'danger')
-        db.session.commit()
-        checkins = CheckIn.query.filter_by(user_id=user.id).all()
-    return render_template('checkin.html', result=result, user=user, now=datetime.utcnow())
+            result = 'invalid'
+            flash('Invalid member QR token or member number.', 'danger')
 
-@app.route('/admin/manual-checkin/<int:user_id>', methods=['POST'])
+    return render_template(
+        'checkin.html',
+        result=result,
+        user=user,
+        latest_checkin=latest_checkin,
+        muscle_groups=MUSCLE_GROUPS,
+        now=datetime.utcnow()
+    )
+
+@app.route('/manual-checkin/<int:user_id>', methods=['GET', 'POST'])
 @staff_required
 def manual_checkin(user_id):
+
     user = User.query.get_or_404(user_id)
-    valid = user.membership_expiry and user.membership_expiry > datetime.utcnow()
-    db.session.add(CheckIn(user_id=user.id, method='manual', result='valid' if valid else 'expired'))
-    db.session.commit(); flash('Manual check-in saved.' if valid else 'Saved as expired check-in.', 'info')
-    return redirect(url_for('member_detail', user_id=user.id))
+
+    #print("MANUAL CHECKIN HIT")
+
+    if request.method == 'POST':
+
+        #print("POST RECEIVED")
+
+        muscle_group = request.form.get('muscle_group')
+        note = request.form.get('note')
+
+        #print("DATA:", muscle_group, note)
+
+        checkin = CheckIn(
+            user_id=user.id,
+            method='manual',
+            result='valid',
+            muscle_group=muscle_group,
+            note=note
+        )
+
+        db.session.add(checkin)
+        db.session.commit()
+
+        #print("CHECKIN SAVED")
+
+        flash(f'Manual check-in recorded for {user.name}.', 'success')
+
+        return redirect(url_for('member_detail', user_id=user.id))
+
+    return render_template(
+        'manual_checkin.html',
+        user=user,
+        muscle_groups=MUSCLE_GROUPS,
+        now=datetime.utcnow()
+    )
 
 @app.route('/admin/transactions')
 @staff_required
@@ -507,9 +583,21 @@ def ensure_schema():
             if cols and 'phone' not in cols:
                 conn.exec_driver_sql('ALTER TABLE user ADD COLUMN phone VARCHAR(30)')
                 conn.commit()
-
+def ensure_checkin_workout_columns():
+    """Add workout columns to existing CheckIn table when upgrading old databases."""
+    try:
+        inspector = db.inspect(db.engine)
+        columns = [c["name"] for c in inspector.get_columns("check_in")]
+        with db.engine.begin() as conn:
+            if "muscle_group" not in columns:
+                conn.execute(db.text("ALTER TABLE check_in ADD COLUMN muscle_group VARCHAR(50)"))
+            if "note" not in columns:
+                conn.execute(db.text("ALTER TABLE check_in ADD COLUMN note VARCHAR(255)"))
+    except Exception as exc:
+        print("Workout column check skipped:", exc)
 def init_db():
     db.create_all()
+    ensure_checkin_workout_columns()
     ensure_schema()
     if not User.query.filter_by(email='admin@gym.com').first():
         admin = User(name='Admin', email='admin@gym.com', password_hash=generate_password_hash('admin123'), role='admin')
@@ -522,6 +610,8 @@ def init_db():
 with app.app_context():
     init_db()
 
+
+
+
 if __name__ == '__main__':
-    #app.run(debug=False)
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(debug=os.getenv('FLASK_DEBUG', '0') == '1')
