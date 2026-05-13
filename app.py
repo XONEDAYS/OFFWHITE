@@ -446,7 +446,7 @@ def checkin():
 
         user = get_user_by_qr_or_id(token)
 
-        if user and user.membership_expiry and user.membership_expiry > datetime.utcnow():
+        if user and user.membership_expiry and user.membership_expiry > datetime.utcnow().date():
             latest_checkin = record_checkin(
                 user=user,
                 method='qr',
