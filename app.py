@@ -617,8 +617,5 @@ def init_db():
 with app.app_context():
     init_db()
 
-
-
-
-if __name__ == '__main__':
-    app.run(debug=os.getenv('FLASK_DEBUG', '0') == '1')
+if __name__ == "__main__":
+    app.run(debug=False)
