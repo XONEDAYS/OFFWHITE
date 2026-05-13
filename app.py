@@ -23,10 +23,10 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-PROMPTPAY_ID = os.getenv('PROMPTPAY_ID', '0812345678')
+PROMPTPAY_ID = os.getenv('PROMPTPAY_ID', '0917853662')
 PAYMENT_MODE = os.getenv('PAYMENT_MODE', 'manual')  # manual, auto_mock, webhook
 WEBHOOK_SECRET = os.getenv('WEBHOOK_SECRET', 'change-webhook-secret')
-GYM_NAME = os.getenv('GYM_NAME', 'Sundos Fitness')
+GYM_NAME = os.getenv('GYM_NAME', 'OFFWHITE')
 BASE_URL = os.getenv('BASE_URL')
 SMTP_HOST = os.getenv('SMTP_HOST')
 SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
@@ -38,9 +38,9 @@ db = SQLAlchemy(app)
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 PLANS = {
-    'day': {'name': 'Day Pass', 'price': 150, 'days': 1},
-    'monthly': {'name': 'Monthly Membership', 'price': 1200, 'days': 30},
-    'quarterly': {'name': 'Quarterly Membership', 'price': 3200, 'days': 90},
+    'day': {'name': 'Day Pass', 'price': 50, 'days': 1},
+    'monthly': {'name': 'Monthly Membership', 'price': 700, 'days': 30},
+    'quarterly': {'name': 'Quarterly Membership', 'price': 2000, 'days': 90},
 }
 
 class User(db.Model):
@@ -446,7 +446,7 @@ def checkin():
 
         user = get_user_by_qr_or_id(token)
 
-        if user and user.membership_expiry and user.membership_expiry > datetime.utcnow().date():
+        if user and user.membership_expiry and user.membership_expiry > datetime.utcnow():
             latest_checkin = record_checkin(
                 user=user,
                 method='qr',
