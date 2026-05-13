@@ -79,7 +79,7 @@ class CheckIn(db.Model):
     # NEW fields 👇
     muscle_group = db.Column(db.String(50))
     note = db.Column(db.String(200))
-
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref='checkins')
 
 # ---------- PromptPay EMV QR ----------
@@ -400,6 +400,8 @@ def checkin():
     if request.method == 'POST':
         token = request.form.get('token','').strip()
         user = User.query.filter_by(member_qr_token=token).first()
+        print("TOKEN:", token)
+        print("USER FOUND:", user)
         
         if user and user.membership_expiry and user.membership_expiry > datetime.utcnow():
             # ✅ get extra data
