@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<div class="auth card center"><div class="big {{ 'ok' if ok else 'no' }}">{{ '✓' if ok else '!' }}</div><h1>{{ message }}</h1><a class="btn" href="{{ url_for('home') }}">Back</a></div>{% endblock %}

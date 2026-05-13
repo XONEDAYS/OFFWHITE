@@ -384,7 +384,7 @@ def member_detail(user_id):
         .order_by(CheckIn.created_at.desc())\
         .all()
 
-    #print("CHECKINS FOUND:", checkins)
+    print("CHECKINS FOUND:", checkins)
 
     last_checkin = checkins[0] if checkins else None
 
@@ -478,16 +478,16 @@ def manual_checkin(user_id):
 
     user = User.query.get_or_404(user_id)
 
-    #print("MANUAL CHECKIN HIT")
+    print("MANUAL CHECKIN HIT")
 
     if request.method == 'POST':
 
-        #print("POST RECEIVED")
+        print("POST RECEIVED")
 
         muscle_group = request.form.get('muscle_group')
         note = request.form.get('note')
 
-        #print("DATA:", muscle_group, note)
+        print("DATA:", muscle_group, note)
 
         checkin = CheckIn(
             user_id=user.id,
@@ -500,7 +500,7 @@ def manual_checkin(user_id):
         db.session.add(checkin)
         db.session.commit()
 
-        #print("CHECKIN SAVED")
+        print("CHECKIN SAVED")
 
         flash(f'Manual check-in recorded for {user.name}.', 'success')
 
@@ -588,11 +588,18 @@ def ensure_checkin_workout_columns():
     try:
         inspector = db.inspect(db.engine)
         columns = [c["name"] for c in inspector.get_columns("check_in")]
+
         with db.engine.begin() as conn:
             if "muscle_group" not in columns:
-                conn.execute(db.text("ALTER TABLE check_in ADD COLUMN muscle_group VARCHAR(50)"))
+                conn.execute(db.text(
+                    "ALTER TABLE check_in ADD COLUMN muscle_group VARCHAR(50)"
+                ))
+
             if "note" not in columns:
-                conn.execute(db.text("ALTER TABLE check_in ADD COLUMN note VARCHAR(255)"))
+                conn.execute(db.text(
+                    "ALTER TABLE check_in ADD COLUMN note VARCHAR(255)"
+                ))
+
     except Exception as exc:
         print("Workout column check skipped:", exc)
 def init_db():

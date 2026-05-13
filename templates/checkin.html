@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-card">
+    <h2>QR / Member Number Check-in</h2>
+    <p class="hint">Scan the member QR token or type the member number. After scanning, choose today's workout and click Check in.</p>
+
+    <div id="reader" style="width:300px; max-width:100%; margin-bottom:16px;"></div>
+
+    <form method="post">
+        <label>QR token or Member Number</label>
+        <input name="token" id="token" autofocus required placeholder="Scan QR or type member number">
+
+        <label>Muscle Group Worked Today</label>
+        <select name="muscle_group" required>
+            {% for muscle in muscle_groups %}
+            <option value="{{ muscle }}">{{ muscle }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Workout Note</label>
+        <input type="text" name="note" placeholder="Optional: e.g. bench press, squats, light cardio">
+
+        <button class="btn full">Check in</button>
+    </form>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+    function onScanSuccess(decodedText, decodedResult) {
+        document.querySelector("input[name='token']").value = decodedText;
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+
+    Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                onScanSuccess
+            ).catch(err => console.log("Camera start error:", err));
+        }
+    }).catch(err => console.log("Camera error:", err));
+    </script>
+
+    {% if result %}
+    <hr>
+    <h3 class="status {{'good' if result=='valid' else 'bad'}}">
+        {% if result == 'valid' %}VALID CHECK-IN{% elif result == 'expired' %}EXPIRED MEMBERSHIP{% else %}INVALID{% endif %}
+    </h3>
+
+    {% if user %}
+    <div class="card">
+        <h3>{{ user.name }}</h3>
+        <p><b>Member Number:</b> #{{ user.id }}</p>
+        <p><b>Email:</b> {{ user.email }}</p>
+        <p><b>Phone:</b> {{ user.phone or '-' }}</p>
+        <p><b>Membership:</b> {{ user.membership_type or '-' }}</p>
+        <p><b>Expires:</b> {{ user.membership_expiry or '-' }}</p>
+
+        {% if latest_checkin %}
+        <p><b>Workout today:</b> {{ latest_checkin.muscle_group or '-' }}</p>
+        <p><b>Note:</b> {{ latest_checkin.note or '-' }}</p>
+        {% endif %}
+
+        <a class="btn ghost" href="{{ url_for('member_detail', user_id=user.id) }}">View member detail</a>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

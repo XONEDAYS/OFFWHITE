@@ -1,54 +1,84 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="manifest" href="/static/manifest.json">
-    <title>Member Detail</title>
-    <style>
-        body { font-family: Arial; padding: 20px; }
-        .card { border: 1px solid #ddd; padding: 18px; border-radius: 14px; max-width: 720px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    </style>
-</head>
-<body>
-<div style="margin-bottom:20px;">
-    <a href="/">🏠 Home</a> |
-    <a href="/scan">📷 Scan</a> |
-    <a href="/members">👥 Members</a> |
-    <a href="/dashboard">📊 Dashboard</a> |
-    <a href="/logs">📜 Logs</a> |
-    <a href="/logout">🚪 Logout</a>
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="split">
+
+<div class="card">
+    <h2>{{user.name}}</h2>
+    <p><b>Member Number:</b> #{{ user.id }}</p>
+    <p>{{user.email}}</p>
+    <p>Phone: {{user.phone or '-'}}</p>
+    <p>Role: {{user.role}}</p>
+
+    <p>
+        Status:
+        <span class="status {{'good' if user.membership_expiry and user.membership_expiry>now else 'bad'}}">
+            {{'Active' if user.membership_expiry and user.membership_expiry>now else 'Inactive'}}
+        </span>
+    </p>
+
+    <p>Membership: {{user.membership_type or '-'}}</p>
+    <p>Expiry: {{user.membership_expiry or '-'}}</p>
+
+    {% if last_checkin %}
+    <hr>
+    <h3>Last Workout</h3>
+    <p><b>Date:</b> {{ last_checkin.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    <p><b>Muscle:</b> {{ last_checkin.muscle_group or '-' }}</p>
+    <p><b>Note:</b> {{ last_checkin.note or '-' }}</p>
+    {% endif %}
+
+    <form method="post" action="{{url_for('regenerate_qr',user_id=user.id)}}">
+        <button class="btn ghost">Regenerate lost QR</button>
+    </form>
+
+    {% if current_user.role == 'admin' %}
+    <a class="btn ghost" href="{{url_for('admin_reset_password',user_id=user.id)}}">Reset Password</a>
+    {% endif %}
+
+    <a class="btn" href="{{url_for('manual_checkin',user_id=user.id)}}">Manual check-in</a>
 </div>
 
 <div class="card">
-    <h1>{{ member['name'] }}</h1>
-    <p><strong>Member number:</strong> {{ member['id'] }}</p>
-    <p><strong>Phone:</strong> {{ member['phone'] }}</p>
-    <p><strong>Expiry:</strong> {{ member['expiry'] }}</p>
-    <p><strong>Total visits:</strong> {{ total_visits }}</p>
-    <p><strong>Last visit:</strong> {{ last_visit or '-' }}</p>
+    <h3>Workout History</h3>
+    <p>Total Sessions: {{ checkins|length }}</p>
 
-    <h2>Workout History</h2>
-    {% if logs %}
+    {% if checkins %}
     <table>
         <tr>
             <th>Date</th>
             <th>Muscle</th>
             <th>Note</th>
-            <th>Result</th>
+            <th>Method</th>
         </tr>
-        {% for l in logs %}
+
+        {% for c in checkins %}
         <tr>
-            <td>{{ l['datetime'] }}</td>
-            <td>{{ l['muscle_group'] or '-' }}</td>
-            <td>{{ l['note'] or '-' }}</td>
-            <td>{{ l['result'] or 'valid' }}</td>
+            <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ c.muscle_group or '-' }}</td>
+            <td>{{ c.note or '-' }}</td>
+            <td>{{ c.method or '-' }}</td>
         </tr>
         {% endfor %}
     </table>
     {% else %}
-        <p>No activity yet</p>
+    <p class="hint">No activity yet.</p>
     {% endif %}
 </div>
-</body>
-</html>
+
+<div class="card">
+    <h3>Payments</h3>
+
+    {% for p in payments %}
+    <div class="row">
+        <span>{{p.ref}} · {{plans[p.plan].name}} · ฿{{p.amount}}</span>
+        <b>{{p.status}}</b>
+    </div>
+    {% else %}
+    <p class="hint">No payments.</p>
+    {% endfor %}
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-card">
+    <h2>Manual Check-in</h2>
+
+    <div class="card">
+        <h3>{{ user.name }}</h3>
+        <p><b>Member Number:</b> #{{ user.id }}</p>
+        <p><b>Phone:</b> {{ user.phone or '-' }}</p>
+        <p><b>Membership:</b> {{ user.membership_type or '-' }}</p>
+        <p><b>Expires:</b> {{ user.membership_expiry or '-' }}</p>
+    </div>
+
+    <form method="post">
+        <label>Muscle Group Worked Today</label>
+        <select name="muscle_group" required>
+            {% for muscle in muscle_groups %}
+            <option value="{{ muscle }}">{{ muscle }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Workout Note</label>
+        <input type="text" name="note" placeholder="Optional: e.g. leg press, rowing, stretching">
+
+        <button class="btn full">Record manual check-in</button>
+    </form>
+</div>
+{% endblock %}
