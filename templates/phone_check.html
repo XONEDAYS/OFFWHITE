@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    padding: 40px;
+}
+input {
+    font-size: 28px;
+    padding: 15px;
+    width: 80%;
+}
+
+.result {
+    margin-top: 40px;
+    font-size: 50px;
+    padding: 40px;
+    border-radius: 10px;
+}
+
+.valid {
+    background-color: #28a745;
+    color: white;
+}
+
+.expired {
+    background-color: #dc3545;
+    color: white;
+}
+
+.notfound {
+    background-color: #6c757d;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📱 Phone Check</h1>
+
+<input type="text" id="phone" placeholder="Enter phone" oninput="checkPhone()">
+
+<div id="result"></div>
+
+<script>
+async function checkPhone() {
+    let phone = document.getElementById("phone").value;
+
+    if (phone.length < 5) return;
+
+    let res = await fetch(`/api/check-phone?phone=${phone}`);
+    let data = await res.json();
+
+    let div = document.getElementById("result");
+
+    if (data.status === "valid") {
+        div.className = "result valid";
+        div.innerText = "✅ VALID\n" + data.name;
+    } else if (data.status === "expired") {
+        div.className = "result expired";
+        div.innerText = "❌ EXPIRED\n" + data.name;
+    } else {
+        div.className = "result notfound";
+        div.innerText = "❌ NOT FOUND";
+    }
+}
+</script>
+
+</body>
+</html>
+
+
+

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="manifest" href="/static/manifest.json">
+    <title>Scan QR</title>
+</head>
+<body>
+<div style="margin-bottom:20px;">
+    <a href="/">🏠 Home</a> |
+    <a href="/scan">📷 Scan</a> |
+    <a href="/members">👥 Members</a> |
+    <a href="/dashboard">📊 Dashboard</a> |
+    <a href="/logs">📜 Logs</a> |
+    <a href="/logout">🚪 Logout</a>
+</div>
+<h1>📷 Scan Member QR Code</h1>
+<p>Scan the member QR. After scanning, choose today’s workout and save check-in.</p>
+
+<div id="reader" style="width:320px;"></div>
+<audio id="successSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+function onScanSuccess(decodedText) {
+    document.getElementById("successSound").play();
+    setTimeout(() => { window.location.href = decodedText; }, 300);
+}
+const html5QrCode = new Html5Qrcode("reader");
+html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    onScanSuccess
+).catch(err => {
+    document.body.insertAdjacentHTML('beforeend', '<p style="color:red;">Camera error: ' + err + '</p>');
+});
+</script>
+</body>
+</html>

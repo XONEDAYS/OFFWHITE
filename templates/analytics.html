@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="manifest" href="/static/manifest.json">
+    <title>Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div>
+    <a href="/">🏠 Home</a> |
+    <a href="/scan">📷 Scan</a> |
+    <a href="/members">👥 Members</a> |
+    <a href="/dashboard">📊 Dashboard</a> |
+    <a href="/logs">📜 Logs</a> |
+    <a href="/analytics">📈 Analytics</a> |
+    <a href="/logout">🚪 Logout</a>
+</div>
+
+<h1>📈 Entry Analytics (Last 7 Days)</h1>
+
+<canvas id="chart" width="400" height="200"></canvas>
+
+<script>
+    const labels = JSON.parse('{{ dates | tojson | safe }}');
+    const dataValues = JSON.parse('{{ counts | tojson | safe }}');
+    
+    const ctx = document.getElementById("chart").getContext("2d");
+    
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Entries",
+                data: dataValues
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    </script>
+
+</body>
+</html>

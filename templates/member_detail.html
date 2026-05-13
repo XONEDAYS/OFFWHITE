@@ -1,37 +1,54 @@
-{% extends 'base.html' %}{% block content %}<div class="split"><div class="card"><h2>{{user.name}}</h2><p>{{user.email}}</p><p>Phone: {{user.phone or '-'}}</p><p>Role: {{user.role}}</p><p>Status: <span class="status {{'good' if user.membership_expiry and user.membership_expiry>now else 'bad'}}">{{'Active' if user.membership_expiry and user.membership_expiry>now else 'Inactive'}}</span></p><p>Membership: {{user.membership_type or '-'}}</p><p>Expiry: {{user.membership_expiry or '-'}}</p><form method="post" action="{{url_for('regenerate_qr',user_id=user.id)}}"><button class="btn ghost">Regenerate lost QR</button></form>{% if current_user.role == 'admin' %}<a class="btn ghost" href="{{url_for('admin_reset_password',user_id=user.id)}}">Reset Password</a>{% endif %}<form method="post" action="{{url_for('manual_checkin',user_id=user.id)}}"><button class="btn">Manual check-in</button></form></div><div class="card"><h3>Payments</h3>
-    <h3>Today's Workout</h3>
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="manifest" href="/static/manifest.json">
+    <title>Member Detail</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .card { border: 1px solid #ddd; padding: 18px; border-radius: 14px; max-width: 720px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    </style>
+</head>
+<body>
+<div style="margin-bottom:20px;">
+    <a href="/">🏠 Home</a> |
+    <a href="/scan">📷 Scan</a> |
+    <a href="/members">👥 Members</a> |
+    <a href="/dashboard">📊 Dashboard</a> |
+    <a href="/logs">📜 Logs</a> |
+    <a href="/logout">🚪 Logout</a>
+</div>
 
-    {% if latest %}
-        <p>
-            {{ latest.muscle_group or 'No muscle recorded' }}
-            {% if latest.note %}
-                ({{ latest.note }})
-            {% endif %}
-        </p>
+<div class="card">
+    <h1>{{ member['name'] }}</h1>
+    <p><strong>Member number:</strong> {{ member['id'] }}</p>
+    <p><strong>Phone:</strong> {{ member['phone'] }}</p>
+    <p><strong>Expiry:</strong> {{ member['expiry'] }}</p>
+    <p><strong>Total visits:</strong> {{ total_visits }}</p>
+    <p><strong>Last visit:</strong> {{ last_visit or '-' }}</p>
+
+    <h2>Workout History</h2>
+    {% if logs %}
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Muscle</th>
+            <th>Note</th>
+            <th>Result</th>
+        </tr>
+        {% for l in logs %}
+        <tr>
+            <td>{{ l['datetime'] }}</td>
+            <td>{{ l['muscle_group'] or '-' }}</td>
+            <td>{{ l['note'] or '-' }}</td>
+            <td>{{ l['result'] or 'valid' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
     {% else %}
         <p>No activity yet</p>
     {% endif %}
-
-<h4>Workout History</h4>
-
-{% if checkins %}
-<table>
-<tr>
-    <th>Date</th>
-    <th>Muscle</th>
-    <th>Note</th>
-</tr>
-
-{% for c in checkins %}
-<tr>
-    <td>{{ c.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
-    <td>{{ c.muscle_group or '-' }}</td>
-    <td>{{ c.note or '-' }}</td>
-</tr>
-{% endfor %}
-</table>
-{% else %}
-<p>No activity yet</p>
-{% endif %}
-<p>Total: {{ checkins|length }}</p>
-{% for p in payments %}<div class="row"><span>{{p.ref}} · {{plans[p.plan].name}} · ฿{{p.amount}}</span><b>{{p.status}}</b></div>{% else %}<p class="hint">No payments.</p>{% endfor %}</div></div>{% endblock %}
+</div>
+</body>
+</html>
