@@ -6,6 +6,12 @@ gunicorn==22.0.0
 python-dotenv==1.0.1
 itsdangerous==2.2.0
 
+flask
 flask_sqlalchemy
+werkzeug
+python-dotenv
+itsdangerous
+gunicorn
 psycopg2-binary
+qrcode
 pillow
