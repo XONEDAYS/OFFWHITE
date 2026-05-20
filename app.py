@@ -619,8 +619,8 @@ def init_db():
     db.session.commit()
 
 with app.app_context():
-    #init_db()
-    db.create_all()
+    init_db()
+    #db.create_all()
 if __name__ == '__main__':
     import os
 
