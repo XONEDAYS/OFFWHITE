@@ -48,6 +48,7 @@ PLANS = {
 }
 
 class User(db.Model):
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(160), unique=True, nullable=False)
@@ -63,7 +64,7 @@ class User(db.Model):
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ref = db.Column(db.String(30), unique=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     plan = db.Column(db.String(30), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='pending') # pending, approved, rejected, auto_verified
@@ -75,7 +76,7 @@ class Payment(db.Model):
 
 class CheckIn(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     method = db.Column(db.String(30), default='qr')
     result = db.Column(db.String(30), default='valid')
