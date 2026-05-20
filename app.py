@@ -22,11 +22,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "connect_args": {
-        "sslmode": "require"
-    }
-}
+
 PROMPTPAY_ID = os.getenv('PROMPTPAY_ID', '0917853662')
 PAYMENT_MODE = os.getenv('PAYMENT_MODE', 'manual')  # manual, auto_mock, webhook
 WEBHOOK_SECRET = os.getenv('WEBHOOK_SECRET', 'change-webhook-secret')
@@ -50,7 +46,7 @@ PLANS = {
 with app.app_context():
     #init_db()
     db.create_all()
-    
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
