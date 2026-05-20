@@ -43,9 +43,7 @@ PLANS = {
     'quarterly': {'name': 'Quarterly Membership', 'price': 2000, 'days': 90},
 }
 
-with app.app_context():
-    #init_db()
-    db.create_all()
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -618,6 +616,9 @@ def init_db():
         db.session.add(staff)
     db.session.commit()
 
+#with app.app_context():
+    #init_db()
+    #db.create_all()
 
 if __name__ == '__main__':
     import os
