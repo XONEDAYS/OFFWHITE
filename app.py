@@ -617,15 +617,9 @@ def init_db():
         db.session.add(staff)
     db.session.commit()
 
-#with app.app_context():
-    #init_db()
+with app.app_context():
+    init_db()
     #db.create_all()
-try:
-    with app.app_context():
-        db.create_all()
-        print("TABLES CREATED")
-except Exception as e:
-    print("CREATE_ALL ERROR:", e)
 
 if __name__ == '__main__':
     import os
