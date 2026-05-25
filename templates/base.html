@@ -7,7 +7,7 @@
 </head><body>
 <nav class="nav"><a class="brand" href="{{ url_for('home') }}">{{ gym_name }}</a><div>
 {% if current_user %}
-<a href="{{ url_for('dashboard') }}">My QR</a><a href="{{ url_for('change_password') }}">Change Password</a>{% if current_user.role in ['admin','staff'] %}<a href="{{ url_for('admin_dashboard') }}">Admin</a><a href="{{ url_for('members') }}">Members</a><a href="{{ url_for('transactions') }}">Transactions</a><a href="{{ url_for('checkin') }}">Check-in</a>{% endif %}<a href="{{ url_for('logout') }}">Logout</a>
+<a href="{{ url_for('dashboard') }}">My QR</a><a href="{{ url_for('change_password') }}">Change Password</a>{% if current_user.role in ['admin','staff'] %}<a href="{{ url_for('admin_dashboard') }}">Main</a><a href="{{ url_for('checkin') }}">Check-in</a>{% endif %}<a href="{{ url_for('logout') }}">Logout</a>
 {% else %}<a href="{{ url_for('login') }}">Login</a><a class="pill" href="{{ url_for('register') }}">Join</a>{% endif %}
 </div></nav>
 <main class="wrap">
