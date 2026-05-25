@@ -34,9 +34,30 @@
 
     {% if current_user.role == 'admin' %}
     <a class="btn ghost" href="{{url_for('admin_reset_password',user_id=user.id)}}">Reset Password</a>
+
+    <form method="post"
+          action="{{ url_for('delete_member', user_id=user.id) }}"
+          onsubmit="return confirm('Delete this member permanently? This will also delete payments and workout history.')">
+        <button class="btn ghost">Delete Member</button>
+    </form>
     {% endif %}
 
     <a class="btn" href="{{url_for('manual_checkin',user_id=user.id)}}">Manual check-in</a>
+</div>
+
+<div class="card">
+    <h3>Renew / Select Plan</h3>
+    <p class="hint">Use this when an old customer comes back or when you want to renew membership. The plan amount will be added to transactions automatically.</p>
+
+    <form method="post" action="{{ url_for('renew_member', user_id=user.id) }}">
+        <label>Select plan</label>
+        <select name="plan" required>
+            {% for key,p in plans.items() %}
+            <option value="{{key}}">{{p.name}} — ฿{{p.price}}</option>
+            {% endfor %}
+        </select>
+        <button class="btn full">Renew and Record Transaction</button>
+    </form>
 </div>
 
 <div class="card">
@@ -50,6 +71,7 @@
             <th>Muscle</th>
             <th>Note</th>
             <th>Method</th>
+            {% if current_user.role == 'admin' %}<th>Action</th>{% endif %}
         </tr>
 
         {% for c in checkins %}
@@ -58,6 +80,15 @@
             <td>{{ c.muscle_group or '-' }}</td>
             <td>{{ c.note or '-' }}</td>
             <td>{{ c.method or '-' }}</td>
+            {% if current_user.role == 'admin' %}
+            <td>
+                <form method="post"
+                      action="{{ url_for('delete_checkin', checkin_id=c.id) }}"
+                      onsubmit="return confirm('Delete this workout history?')">
+                    <button class="btn ghost">Delete</button>
+                </form>
+            </td>
+            {% endif %}
         </tr>
         {% endfor %}
     </table>
@@ -67,11 +98,14 @@
 </div>
 
 <div class="card">
-    <h3>Payments</h3>
+    <h3>Transactions / Payments</h3>
 
     {% for p in payments %}
     <div class="row">
-        <span>{{p.ref}} · {{plans[p.plan].name}} · ฿{{p.amount}}</span>
+        <span>
+            {{p.ref}} · {{plans[p.plan].name if p.plan in plans else p.plan}} · ฿{{p.amount}}
+            <br><small>{{p.created_at.strftime('%Y-%m-%d %H:%M')}} · {{p.method}}</small>
+        </span>
         <b>{{p.status}}</b>
     </div>
     {% else %}

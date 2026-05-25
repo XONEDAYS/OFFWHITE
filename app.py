@@ -132,6 +132,23 @@ def activate_membership(user, plan_key):
     user.membership_expiry = start + timedelta(days=plan['days'])
     user.member_qr_token = uuid.uuid4().hex
 
+
+def create_approved_payment(user, plan_key, method='frontdesk', slip_note=''):
+    """Record an approved transaction and return the payment."""
+    plan = PLANS[plan_key]
+    payment = Payment(
+        ref='PAY' + uuid.uuid4().hex[:10].upper(),
+        user_id=user.id,
+        plan=plan_key,
+        amount=plan['price'],
+        status='approved',
+        method=method,
+        slip_note=slip_note,
+        approved_at=datetime.utcnow()
+    )
+    db.session.add(payment)
+    return payment
+
 # ---------- Auth helpers ----------
 def current_user():
     uid = session.get('user_id')
@@ -406,14 +423,70 @@ def add_member():
     if request.method == 'POST':
         email = request.form['email'].strip().lower()
         if User.query.filter_by(email=email).first():
-            flash('Email already exists.', 'danger'); return redirect(url_for('add_member'))
-        user = User(name=request.form['name'].strip(), email=email, phone=request.form.get('phone','').strip(), password_hash=generate_password_hash(request.form.get('password') or '123456'))
+            flash('Email already exists.', 'danger')
+            return redirect(url_for('add_member'))
+
+        user = User(
+            name=request.form['name'].strip(),
+            email=email,
+            phone=request.form.get('phone','').strip(),
+            password_hash=generate_password_hash(request.form.get('password') or '123456')
+        )
+
         plan = request.form.get('plan')
-        if plan in PLANS: activate_membership(user, plan)
-        db.session.add(user); db.session.commit()
-        flash('Member added.', 'success')
+        db.session.add(user)
+        db.session.flush()  # gives user.id before creating payment
+
+        if plan in PLANS:
+            activate_membership(user, plan)
+            create_approved_payment(
+                user=user,
+                plan_key=plan,
+                method='frontdesk',
+                slip_note='Created automatically when member was added at front desk.'
+            )
+            flash(f'Member added. {PLANS[plan]["name"]} activated and ฿{PLANS[plan]["price"]} recorded in transactions.', 'success')
+        else:
+            flash('Member added without active plan.', 'success')
+
+        db.session.commit()
         return redirect(url_for('member_detail', user_id=user.id))
+
     return render_template('add_member.html')
+
+
+@app.route('/admin/renew-member/<int:user_id>', methods=['POST'])
+@staff_required
+def renew_member(user_id):
+    user = User.query.get_or_404(user_id)
+    plan = request.form.get('plan')
+    if plan not in PLANS:
+        flash('Invalid renewal plan.', 'danger')
+        return redirect(url_for('member_detail', user_id=user.id))
+
+    activate_membership(user, plan)
+    create_approved_payment(
+        user=user,
+        plan_key=plan,
+        method='frontdesk_renewal',
+        slip_note='Created automatically from member renewal.'
+    )
+    db.session.commit()
+
+    flash(f'{user.name} renewed with {PLANS[plan]["name"]}. ฿{PLANS[plan]["price"]} recorded in transactions.', 'success')
+    return redirect(url_for('member_detail', user_id=user.id))
+
+
+@app.route('/admin/delete-member/<int:user_id>', methods=['POST'])
+@admin_required
+def delete_member(user_id):
+    user = User.query.get_or_404(user_id)
+    CheckIn.query.filter_by(user_id=user.id).delete()
+    Payment.query.filter_by(user_id=user.id).delete()
+    db.session.delete(user)
+    db.session.commit()
+    flash('Member deleted permanently.', 'success')
+    return redirect(url_for('members'))
 
 @app.route('/admin/payment/<ref>/<action>', methods=['POST'])
 @staff_required
@@ -515,6 +588,17 @@ def manual_checkin(user_id):
         muscle_groups=MUSCLE_GROUPS,
         now=datetime.utcnow()
     )
+
+
+@app.route('/admin/delete-checkin/<int:checkin_id>', methods=['POST'])
+@admin_required
+def delete_checkin(checkin_id):
+    checkin = CheckIn.query.get_or_404(checkin_id)
+    user_id = checkin.user_id
+    db.session.delete(checkin)
+    db.session.commit()
+    flash('Workout history deleted.', 'success')
+    return redirect(url_for('member_detail', user_id=user_id))
 
 @app.route('/admin/transactions')
 @staff_required
